@@ -1,4 +1,4 @@
--- OP-CODE AnimatedUI Library V3 (theme manager, mobile input fixes)
+-- OP-CODE AnimatedUI Library V3.1 FIXED (complete source)
 -- Roblox client GUI library with animated spritesheet backgrounds
 local Players = game:GetService('Players')
 local RunService = game:GetService('RunService')
@@ -71,11 +71,11 @@ end
 
 function Library:CreateWindow(options)
  options=options or {}
- local title=options.Title or 'Animated UI'
- local guiName=options.Name or 'AnimatedUILibraryWindow'
+ local title=options.Title or 'OP-CODE HUB'
+ local guiName=options.Name or 'OP_CODE_AnimatedUI_Window'
+ if Library._windows and Library._windows[guiName] then Library._windows[guiName]:Destroy() end
  local old=PlayerGui:FindFirstChild(guiName)
  if old then old:Destroy() end
- if Library._windows and Library._windows[guiName] then Library._windows[guiName]:Destroy() end
  local gui=make('ScreenGui',{Name=guiName,ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=999,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},PlayerGui)
  local main=make('Frame',{Name='Main',AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=options.Size or UDim2.fromOffset(510,360),BackgroundColor3=Color3.fromRGB(10,10,18),BorderSizePixel=0,ClipsDescendants=true,ZIndex=1},gui)
  corner(main,14)
@@ -111,7 +111,7 @@ function Library:CreateWindow(options)
   if soundEnabled then sound.TimePosition=0;sound:Play() end
  end
  local function bindSound(button)
-  button.Activated:Connect(clickSound)
+  return button.Activated:Connect(clickSound)
  end
  local minimize=make('TextButton',{Position=UDim2.new(1,-82,0,8),Size=UDim2.fromOffset(32,32),BackgroundColor3=Color3.fromRGB(43,35,60),Text='−',TextColor3=Color3.new(1,1,1),TextSize=20,ZIndex=7},header);corner(minimize,7)
  bindSound(minimize)
@@ -337,4 +337,106 @@ function Library:CreateWindow(options)
    track(UIS.InputEnded:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then sliding=false end
    end))
-   return {Set=function(_,v2)set(
+   return {Set=function(_,v2)set(tonumber(v2) or lo,true)end,Get=function()return value end}
+  end
+  function tab:Dropdown(x)
+   x=x or {};local values=x.Values or x.Options or {};local chosen=x.Value or values[1]
+   local b=btn(page,(x.Title or 'Dropdown')..': '..tostring(chosen or 'Select'))
+   local list=make('Frame',{Size=UDim2.new(1,0,0,0),BackgroundTransparency=1,Visible=false,ZIndex=7,AutomaticSize=Enum.AutomaticSize.Y},page)
+   make('UIListLayout',{Padding=UDim.new(0,4)},list)
+   for _,item in ipairs(values) do
+    local v=item;local opt=btn(list,tostring(v),30)
+    bindSound(opt)
+    track(opt.MouseButton1Click:Connect(function()chosen=v;b.Text=(x.Title or 'Dropdown')..': '..tostring(v);list.Visible=false;call(x.Callback,v)end))
+   end
+   bindSound(b)
+   track(b.MouseButton1Click:Connect(function()list.Visible=not list.Visible end))
+   applyTheme()
+   return {Get=function()return chosen end,Set=function(_,v)chosen=v;b.Text=(x.Title or 'Dropdown')..': '..tostring(v);call(x.Callback,v)end}
+  end
+  function tab:Input(x)
+   x=x or {};local box=make('TextBox',{Size=UDim2.new(1,0,0,36),BackgroundColor3=Color3.fromRGB(42,31,62),TextColor3=Color3.new(1,1,1),PlaceholderText=x.Placeholder or x.Title or 'Input',Text=x.Default or '',ClearTextOnFocus=false,Font=Enum.Font.Gotham,TextSize=13,ZIndex=7},page);corner(box,8);register(box,'Control','Text')
+   applyTheme()
+   track(box.FocusLost:Connect(function(enter)if enter or not x.EnterOnly then call(x.Callback,box.Text)end end))
+   return box
+  end
+  function tab:ScrollToTop()
+   TweenService:Create(page,TweenInfo.new(.3,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{CanvasPosition=Vector2.zero}):Play()
+  end
+  function tab:Paragraph(x)
+   x=type(x)=='string' and {Text=x} or (x or {})
+   local p=label(page,x.Text or x.Content or '',60)
+   p.TextWrapped=true;p.TextYAlignment=Enum.TextYAlignment.Top
+   p.AutomaticSize=Enum.AutomaticSize.Y
+   return p
+  end
+  applyTheme()
+  return tab
+ end
+ local topButton=make('TextButton',{Name='ScrollTop',AnchorPoint=Vector2.new(1,1),Position=UDim2.new(1,-14,1,-13),Size=UDim2.fromOffset(30,30),BackgroundColor3=Color3.fromRGB(91,48,141),BackgroundTransparency=.1,Text='↑',TextColor3=Color3.new(1,1,1),TextSize=20,ZIndex=12},main)
+ corner(topButton,8);bindSound(topButton);register(topButton,'Accent','Text')
+ track(topButton.Activated:Connect(function()
+  if activeTab then TweenService:Create(activeTab.Page,TweenInfo.new(.3),{CanvasPosition=Vector2.zero}):Play() end
+ end))
+ local grip=make('TextButton',{Name='ResizeGrip',AnchorPoint=Vector2.new(1,1),Position=UDim2.new(1,-3,1,-3),Size=UDim2.fromOffset(15,15),BackgroundTransparency=1,Text='◢',TextColor3=Color3.fromRGB(218,174,255),TextSize=15,ZIndex=14},main)
+ register(grip,nil,'Accent')
+ local sizing=false;local sizingInput;local sizingStart;local originalSize
+ track(grip.InputBegan:Connect(function(input)
+  if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+   sizing=true;sizingInput=input;sizingStart=pos2(input);originalSize=fullSize
+  end
+ end))
+ track(UIS.InputChanged:Connect(function(input)
+  if sizing and (input==sizingInput or (sizingInput and sizingInput.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement)) then
+   local d=(pos2(input)-sizingStart)/math.max(viewport.Scale,.01)
+   window:SetSize(originalSize.X.Offset+d.X,originalSize.Y.Offset+d.Y)
+  end
+ end))
+ track(UIS.InputEnded:Connect(function(input)if input==sizingInput then sizing=false end end))
+ function window:SetFloatingVisible(v)floating.Visible=not not v end
+ window:SetTheme(options.Theme or 'Midnight')
+ local render
+ render=RunService.RenderStepped:Connect(function()
+  if not gui.Parent then render:Disconnect();return end
+  if not main.Visible then return end
+  local gif=GIFs[current];local duration=0
+  for _,s in ipairs(gif.Sheets) do duration=duration+s[4]/s[2] end
+  local elapsed=(frozen+(playing and (os.clock()-started) or 0))%duration
+  for _,s in ipairs(gif.Sheets) do
+   local d=s[4]/s[2]
+   if elapsed<d then
+    local frame=math.clamp(math.floor(elapsed*s[2]),0,s[4]-1)
+    if lastSheet~=s or lastFrame~=frame then
+     local col=frame%s[3];local row=math.floor(frame/s[3])
+     bg.ImageRectSize=Vector2.new(s[5],s[6]);bg.ImageRectOffset=Vector2.new(col*s[5],row*s[6])
+     local asset='rbxassetid://'..s[1];if bg.Image~=asset then bg.Image=asset end
+     lastSheet=s;lastFrame=frame
+    end
+    break
+   end
+   elapsed=elapsed-d
+  end
+ end)
+ function window:Destroy()
+  if self.Destroyed then return end
+  self.Destroyed=true
+  if render then render:Disconnect() end
+  if camConnection then camConnection:Disconnect() end
+  for _,c in ipairs(connections) do c:Disconnect() end
+  gui:Destroy()
+  if Library._windows and Library._windows[guiName]==self then Library._windows[guiName]=nil end
+  if themeHook==register then themeHook=nil end
+ end
+ track(close.MouseButton1Click:Connect(function()window:Destroy()end))
+ window:SetAnimation(options.Animation or 'Skulls')
+ task.spawn(function()
+  local assets,seen={},{}
+  for _,g in ipairs(GIFs) do for _,s in ipairs(g.Sheets) do
+   local id='rbxassetid://'..s[1]
+   if not seen[id] then seen[id]=true;table.insert(assets,id) end
+  end end
+  pcall(function()ContentProvider:PreloadAsync(assets)end)
+ end)
+ return window
+end
+return Library
