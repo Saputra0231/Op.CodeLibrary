@@ -89,7 +89,7 @@ function Library:CreateWindow(options)
  corner(avatar,18)
  task.spawn(function()
   local ok,img=pcall(function()return Players:GetUserThumbnailAsync(Players.LocalPlayer.UserId,Enum.ThumbnailType.HeadShot,Enum.ThumbnailSize.Size150x150)end)
-  if ok and avatar.Parent and not logoImage then avatar.Image=img end
+  if ok and avatar.Parent then avatar.Image=img end
  end)
  local floating=make('TextButton',{Name='FloatingOpenButton',AnchorPoint=Vector2.new(0,0.5),Position=UDim2.new(0,18,0.5,0),Size=UDim2.fromOffset(56,56),BackgroundColor3=Color3.fromRGB(62,35,103),Text='',AutoButtonColor=true,ZIndex=30},gui)
  corner(floating,28)
@@ -103,7 +103,6 @@ function Library:CreateWindow(options)
  -- Custom logo: set LogoId to a Roblox decal/image asset or LogoImage to a local executor asset URL.
  if logoImage then
   floatIcon.Image=logoImage
-  avatar.Image=logoImage
  end
  local sound=make('Sound',{Name='UIClick',SoundId=options.ClickSoundId or 'rbxassetid://140172825268473',Volume=options.SoundVolume or .28},gui)
  local soundEnabled=options.Sounds~=false
@@ -121,6 +120,28 @@ function Library:CreateWindow(options)
  corner(side,9)
  make('UIListLayout',{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},side)
  make('UIPadding',{PaddingTop=UDim.new(0,6),PaddingLeft=UDim.new(0,6),PaddingRight=UDim.new(0,6),PaddingBottom=UDim.new(0,6)},side)
+
+ -- Player profile belongs to the sidebar. Custom LogoId applies ONLY to floating button.
+ local localPlayer=Players.LocalPlayer
+ local profile=make('Frame',{Name='PlayerProfile',LayoutOrder=-1000,Size=UDim2.new(1,0,0,148),BackgroundColor3=Color3.fromRGB(29,24,46),BackgroundTransparency=.12,BorderSizePixel=0,ZIndex=7},side)
+ corner(profile,9)
+ local profileAvatar=make('ImageLabel',{Name='ProfileAvatar',Position=UDim2.fromOffset(8,9),Size=UDim2.fromOffset(44,44),BackgroundColor3=Color3.fromRGB(43,35,62),Image='',ZIndex=8},profile)
+ corner(profileAvatar,22)
+ local profileDisplay=make('TextLabel',{Name='DisplayName',Position=UDim2.fromOffset(6,58),Size=UDim2.new(1,-12,0,20),BackgroundTransparency=1,Text=localPlayer.DisplayName,Font=Enum.Font.GothamBold,TextSize=13,TextTruncate=Enum.TextTruncate.AtEnd,TextColor3=Color3.new(1,1,1),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=8},profile)
+ local profileUsername=make('TextLabel',{Name='Username',Position=UDim2.fromOffset(6,78),Size=UDim2.new(1,-12,0,17),BackgroundTransparency=1,Text='@'..localPlayer.Name,Font=Enum.Font.Gotham,TextSize=11,TextTruncate=Enum.TextTruncate.AtEnd,TextColor3=Color3.fromRGB(190,180,205),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=8},profile)
+ local clockText=make('TextLabel',{Name='RealtimeClock',Position=UDim2.fromOffset(6,106),Size=UDim2.new(1,-12,0,21),BackgroundTransparency=1,Text='--:--:--',Font=Enum.Font.GothamBold,TextSize=17,TextColor3=Color3.fromRGB(210,160,255),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=8},profile)
+ local clockCaption=make('TextLabel',{Name='ClockCaption',Position=UDim2.fromOffset(6,128),Size=UDim2.new(1,-12,0,13),BackgroundTransparency=1,Text='LOCAL DEVICE TIME',Font=Enum.Font.Gotham,TextSize=9,TextColor3=Color3.fromRGB(190,180,205),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=8},profile)
+ task.spawn(function()
+  local ok,img=pcall(function() return Players:GetUserThumbnailAsync(localPlayer.UserId,Enum.ThumbnailType.HeadShot,Enum.ThumbnailSize.Size150x150) end)
+  if ok and profileAvatar.Parent then profileAvatar.Image=img end
+ end)
+ task.spawn(function()
+  while gui.Parent and profile.Parent do
+   clockText.Text=os.date('%H:%M:%S')
+   task.wait(1)
+  end
+ end)
+
  local content=make('Frame',{Name='Pages',Position=UDim2.fromOffset(157,58),Size=UDim2.new(1,-167,1,-68),BackgroundTransparency=1,ZIndex=5},main)
  local viewport=make('UIScale',{Scale=1},main)
  local function resize()
@@ -163,6 +184,7 @@ function Library:CreateWindow(options)
  end
  register(main,'Background');register(header,'Header');register(side,'Sidebar');register(floating,'Accent');register(minimize,'Control','Text');register(close,'Control','Text');register(ttl,nil,'Text')
  register(avatar,'Control')
+ register(profile,'Control');register(profileAvatar,'Control');register(profileDisplay,nil,'Text');register(profileUsername,nil,'Muted');register(clockText,nil,'Accent');register(clockCaption,nil,'Muted')
  bindTheme(mainStroke,'Color','Border');bindTheme(tint,'BackgroundColor3','Overlay')
  -- Logo images retain their original colors.
  themeHook=register
