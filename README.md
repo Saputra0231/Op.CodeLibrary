@@ -155,8 +155,9 @@ Tabs appear in the order they are created, provided the loaded library does not 
 
 Add your screenshots to the repository's `assets` folder, then uncomment these lines:
 
-<!-- ![OP-CODE UI Preview](assets/preview.png) -->
-<!-- ![OP-CODE Banner](assets/banner.png) -->
+![OP-CODE UI Preview](assets/Screenshot_2026-10-21-23-52-38-198_com.roblox.client.jpg)
+
+![OP-CODE Banner](assets/banner.png)
 
 ## 📌 Notes
 
