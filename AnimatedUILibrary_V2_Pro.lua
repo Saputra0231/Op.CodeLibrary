@@ -1,4 +1,4 @@
--- AnimatedUI Library V2 PRO
+-- OP-CODE AnimatedUI Library V3 (theme manager, mobile input fixes)
 -- Roblox client GUI library with animated spritesheet backgrounds
 local Players = game:GetService('Players')
 local RunService = game:GetService('RunService')
@@ -20,7 +20,32 @@ local GIFs = {
  {Name='RY GANTENG',Sheets={{77481755047361,30,4,32,256,90},{111610672703204,30,4,32,256,90},{75249125361441,30,4,32,256,90},{85810883004608,30,4,25,256,90}}}
 }
 
+local function pos2(input)
+ local p=input.Position
+ return Vector2.new(p.X,p.Y)
+end
+local Themes = {
+ Midnight={Background='#0A0A12',Header='#100E20',Sidebar='#151124',Control='#30243F',Accent='#AB52FF',Text='#F5F0FF',Muted='#C8B7D9',Border='#AB52FF',Overlay='#05050D'},
+ Dark={Background='#101114',Header='#18191E',Sidebar='#1B1D22',Control='#30323B',Accent='#7F8FA8',Text='#F7F7F8',Muted='#B5BBC6',Border='#4A4D58',Overlay='#090A0C'},
+ Light={Background='#F0F2F7',Header='#FFFFFF',Sidebar='#E6EAF2',Control='#DCE3EF',Accent='#5474D8',Text='#1B2436',Muted='#4C5870',Border='#B4C3E4',Overlay='#FFFFFF'},
+ Ocean={Background='#071825',Header='#0C2637',Sidebar='#0C2B3F',Control='#17465A',Accent='#26B7E8',Text='#EAFBFF',Muted='#ACD5E0',Border='#26B7E8',Overlay='#041420'},
+ Emerald={Background='#071812',Header='#10261D',Sidebar='#0D2B1F',Control='#20543D',Accent='#3CE3A0',Text='#E8FFF4',Muted='#A6D5C0',Border='#3CE3A0',Overlay='#05120C'},
+ Crimson={Background='#1B0B10',Header='#2A1019',Sidebar='#2A121A',Control='#552332',Accent='#FF547A',Text='#FFF1F4',Muted='#E1B7C3',Border='#FF547A',Overlay='#14060A'},
+ Sunset={Background='#20101F',Header='#30172D',Sidebar='#311D35',Control='#59324A',Accent='#FF9755',Text='#FFF5EE',Muted='#E8C4BB',Border='#FF9755',Overlay='#130B13'},
+ Cyberpunk={Background='#070F18',Header='#0B1C28',Sidebar='#0B2230',Control='#1A3D4C',Accent='#00E5FF',Text='#E9FDFF',Muted='#9FD5E1',Border='#00E5FF',Overlay='#030A11'},
+ Rose={Background='#1C101A',Header='#2C1727',Sidebar='#2D1B2B',Control='#55304D',Accent='#FF75CA',Text='#FFF1FB',Muted='#E9BCD9',Border='#FF75CA',Overlay='#110811'},
+}
+local function color(v)
+ if typeof(v)=='Color3' then return v end
+ if type(v)=='string' then
+  local h=v:gsub('#','')
+  if #h==6 and h:match('^%x+$') then return Color3.fromRGB(tonumber(h:sub(1,2),16),tonumber(h:sub(3,4),16),tonumber(h:sub(5,6),16)) end
+ end
+ return nil
+end
 local Library = {}
+local themeHook=nil
+Library.Themes = Themes
 Library.Animations = GIFs
 local function make(class, props, parent)
  local obj=Instance.new(class)
@@ -30,11 +55,14 @@ local function make(class, props, parent)
 end
 local function corner(obj,r) make('UICorner',{CornerRadius=UDim.new(0,r or 9)},obj) end
 local function label(parent,text,size)
- return make('TextLabel',{Size=UDim2.new(1,0,0,size or 28),BackgroundTransparency=1,Text=text or '',TextColor3=Color3.fromRGB(240,236,250),Font=Enum.Font.Gotham,TextSize=13,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=7},parent)
+ local l=make('TextLabel',{Size=UDim2.new(1,0,0,size or 28),BackgroundTransparency=1,Text=text or '',TextColor3=Color3.fromRGB(240,236,250),Font=Enum.Font.Gotham,TextSize=13,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=7},parent)
+ if themeHook then themeHook(l,nil,'Text') end
+ return l
 end
 local function btn(parent,title,height)
  local b=make('TextButton',{Size=UDim2.new(1,0,0,height or 36),BackgroundColor3=Color3.fromRGB(42,31,62),BackgroundTransparency=.12,Text=tostring(title or 'Button'),TextColor3=Color3.new(1,1,1),Font=Enum.Font.GothamMedium,TextSize=13,ZIndex=7,AutoButtonColor=true},parent)
  corner(b,8)
+ if themeHook then themeHook(b,'Control','Text') end
  return b
 end
 local function call(fn,...)
@@ -51,16 +79,17 @@ function Library:CreateWindow(options)
  local gui=make('ScreenGui',{Name=guiName,ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=999,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},PlayerGui)
  local main=make('Frame',{Name='Main',AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=options.Size or UDim2.fromOffset(510,360),BackgroundColor3=Color3.fromRGB(10,10,18),BorderSizePixel=0,ClipsDescendants=true,ZIndex=1},gui)
  corner(main,14)
- make('UIStroke',{Color=Color3.fromRGB(171,82,255),Thickness=1.5},main)
+ local mainStroke=make('UIStroke',{Color=Color3.fromRGB(171,82,255),Thickness=1.5},main)
  local bg=make('ImageLabel',{Name='AnimatedBackground',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ScaleType=Enum.ScaleType.Stretch,ImageTransparency=options.Transparency or .35,ZIndex=1},main)
- make('Frame',{Name='Tint',Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(5,5,13),BackgroundTransparency=options.OverlayTransparency or .42,BorderSizePixel=0,ZIndex=2},main)
+ local tint=make('Frame',{Name='Tint',Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(5,5,13),BackgroundTransparency=options.OverlayTransparency or .42,BorderSizePixel=0,ZIndex=2},main)
  local header=make('Frame',{Name='Header',Size=UDim2.new(1,0,0,48),BackgroundColor3=Color3.fromRGB(10,10,20),BackgroundTransparency=.14,BorderSizePixel=0,Active=true,ZIndex=5},main)
  local ttl=make('TextLabel',{Position=UDim2.fromOffset(58,0),Size=UDim2.new(1,-155,1,0),BackgroundTransparency=1,Text=title,TextColor3=Color3.new(1,1,1),Font=Enum.Font.GothamBold,TextSize=17,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},header)
+ local logoImage=options.LogoImage or (options.LogoId and ('rbxassetid://'..tostring(options.LogoId)))
  local avatar=make('ImageLabel',{Name='PlayerAvatar',Position=UDim2.fromOffset(11,6),Size=UDim2.fromOffset(36,36),BackgroundColor3=Color3.fromRGB(38,30,60),Image='',ZIndex=7},header)
  corner(avatar,18)
  task.spawn(function()
   local ok,img=pcall(function()return Players:GetUserThumbnailAsync(Players.LocalPlayer.UserId,Enum.ThumbnailType.HeadShot,Enum.ThumbnailSize.Size150x150)end)
-  if ok and avatar.Parent then avatar.Image=img end
+  if ok and avatar.Parent and not logoImage then avatar.Image=img end
  end)
  local floating=make('TextButton',{Name='FloatingOpenButton',AnchorPoint=Vector2.new(0,0.5),Position=UDim2.new(0,18,0.5,0),Size=UDim2.fromOffset(56,56),BackgroundColor3=Color3.fromRGB(62,35,103),Text='',AutoButtonColor=true,ZIndex=30},gui)
  corner(floating,28)
@@ -69,8 +98,13 @@ function Library:CreateWindow(options)
  corner(floatIcon,24)
  task.spawn(function()
   local ok,img=pcall(function()return Players:GetUserThumbnailAsync(Players.LocalPlayer.UserId,Enum.ThumbnailType.HeadShot,Enum.ThumbnailSize.Size150x150)end)
-  if ok and floatIcon.Parent then floatIcon.Image=img end
+  if ok and floatIcon.Parent and not logoImage then floatIcon.Image=img end
  end)
+ -- Custom logo: set LogoId to a Roblox decal/image asset or LogoImage to a local executor asset URL.
+ if logoImage then
+  floatIcon.Image=logoImage
+  avatar.Image=logoImage
+ end
  local sound=make('Sound',{Name='UIClick',SoundId=options.ClickSoundId or 'rbxassetid://140172825268473',Volume=options.SoundVolume or .28},gui)
  local soundEnabled=options.Sounds~=false
  local function clickSound()
@@ -103,31 +137,78 @@ function Library:CreateWindow(options)
  local dragging,dragInput,dragStart,startPos=false,nil,nil,nil
  track(header.InputBegan:Connect(function(input)
   if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-   dragging=true;dragInput=input;dragStart=input.Position;startPos=main.Position
+   dragging=true;dragInput=input;dragStart=pos2(input);startPos=main.Position
   end
  end))
  track(UIS.InputChanged:Connect(function(input)
   if not dragging then return end
   if input==dragInput or (dragInput and dragInput.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement) then
-   local d=input.Position-dragStart;local s=math.max(viewport.Scale,.01)
+   local d=pos2(input)-dragStart;local s=math.max(viewport.Scale,.01)
    main.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X/s,startPos.Y.Scale,startPos.Y.Offset+d.Y/s)
   end
  end))
  track(UIS.InputEnded:Connect(function(input) if input==dragInput or (dragInput and dragInput.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1) then dragging=false end end))
  local fullSize=main.Size
  local window={Gui=gui,Main=main,Background=bg,FloatingButton=floating,CurrentAnimation=1,Playing=true,Destroyed=false}
+ local themeBindings={}
+ local currentTheme='Midnight'
+ local customTheme=nil
+ local function bindTheme(object,property,key)
+  table.insert(themeBindings,{object,property,key})
+ end
+ local function register(obj,background,textColor)
+  if background then bindTheme(obj,'BackgroundColor3',background) end
+  if textColor then bindTheme(obj,'TextColor3',textColor) end
+  return obj
+ end
+ register(main,'Background');register(header,'Header');register(side,'Sidebar');register(floating,'Accent');register(minimize,'Control','Text');register(close,'Control','Text');register(ttl,nil,'Text')
+ register(avatar,'Control')
+ bindTheme(mainStroke,'Color','Border');bindTheme(tint,'BackgroundColor3','Overlay')
+ -- Logo images retain their original colors.
+ themeHook=register
+ local function palette()
+  local base=Themes[currentTheme] or Themes.Midnight
+  local t={}
+  for k,v in pairs(base) do t[k]=color(v) or v end
+  if customTheme then for k,v in pairs(customTheme) do local c=color(v);if c then t[k]=c end end end
+  return t
+ end
+ local function applyTheme()
+  local t=palette()
+  for _,b in ipairs(themeBindings) do
+   local obj,prop,key=b[1],b[2],b[3]
+   if obj and obj.Parent and t[key] then obj[prop]=t[key] end
+  end
+  if window._activeButton and window._activeButton.Parent then window._activeButton.BackgroundColor3=t.Accent end
+ end
+ function window:SetTheme(name)
+  if not Themes[name] then return false end
+  currentTheme=name;customTheme=nil;applyTheme();return true
+ end
+ function window:SetCustomTheme(values)
+  if type(values)~='table' then return false end
+  customTheme=values;applyTheme();return true
+ end
+ function window:GetTheme()return currentTheme end
+ function window:GetThemes()
+  local names={}
+  for name in pairs(Themes) do table.insert(names,name) end
+  table.sort(names);return names
+ end
  Library._windows=Library._windows or {}
  Library._windows[guiName]=window
+ local floatMoved=false
  local floatDragging=false
  local floatStart,floatPosition,floatInput
  track(floating.InputBegan:Connect(function(input)
   if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-   floatDragging=true;floatStart=input.Position;floatPosition=floating.Position;floatInput=input
+   floatDragging=true;floatMoved=false;floatStart=pos2(input);floatPosition=floating.Position;floatInput=input
   end
  end))
  track(UIS.InputChanged:Connect(function(input)
   if floatDragging and (input==floatInput or (floatInput and floatInput.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement)) then
-   local d=input.Position-floatStart
+   local d=pos2(input)-floatStart
+   if d.Magnitude>12 then floatMoved=true end
    floating.Position=UDim2.new(floatPosition.X.Scale,floatPosition.X.Offset+d.X,floatPosition.Y.Scale,floatPosition.Y.Offset+d.Y)
   end
  end))
@@ -135,7 +216,7 @@ function Library:CreateWindow(options)
   if input==floatInput then floatDragging=false end
  end))
  track(floating.Activated:Connect(function()
-  if floatStart and (UIS:GetMouseLocation()-floatStart).Magnitude>12 then return end
+  if floatMoved then floatMoved=false;return end
   main.Visible=not main.Visible
   clickSound()
  end))
@@ -144,6 +225,11 @@ function Library:CreateWindow(options)
   sound.SoundId=tostring(assetId):find('rbxassetid://',1,true) and tostring(assetId) or 'rbxassetid://'..tostring(assetId)
  end
  function window:SetTitle(value) ttl.Text=tostring(value) end
+ function window:SetLogo(image)
+  local asset=tostring(image or '')
+  if asset:match('^%d+$') then asset='rbxassetid://'..asset end
+  avatar.Image=asset;floatIcon.Image=asset
+ end
  function window:SetVisible(value) main.Visible=not not value end
  function window:SetSize(width,height)
   width=math.clamp(tonumber(width) or 510,350,900)
@@ -181,20 +267,21 @@ function Library:CreateWindow(options)
   opts=type(opts)=='string' and {Title=opts} or (opts or {})
   local name=opts.Title or 'Tab'
   local tabButton=btn(side,name,34)
+  bindTheme(tabButton,'BackgroundColor3','Control')
   bindSound(tabButton)
   local page=make('ScrollingFrame',{Name=name,Size=UDim2.fromScale(1,1),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,Visible=false,ZIndex=6},content)
   make('UIListLayout',{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder},page)
   make('UIPadding',{PaddingTop=UDim.new(0,3),PaddingBottom=UDim.new(0,8),PaddingLeft=UDim.new(0,4),PaddingRight=UDim.new(0,8)},page)
   local function selectTab()
-   if activeTab then activeTab.Page.Visible=false;activeTab.Button.BackgroundColor3=Color3.fromRGB(42,31,62) end
-   page.Visible=true;tabButton.BackgroundColor3=Color3.fromRGB(111,48,170);activeTab={Page=page,Button=tabButton}
+   if activeTab then activeTab.Page.Visible=false;activeTab.Button.BackgroundColor3=palette().Control end
+   page.Visible=true;tabButton.BackgroundColor3=palette().Accent;activeTab={Page=page,Button=tabButton};window._activeButton=tabButton
   end
   track(tabButton.MouseButton1Click:Connect(selectTab))
   if not activeTab then selectTab() end
   local tab={Page=page}
   function tab:Section(x)
    local t=type(x)=='table' and x.Title or x
-   local l=label(page,tostring(t or 'Section'),28);l.Font=Enum.Font.GothamBold;l.TextColor3=Color3.fromRGB(214,169,255);return l
+   local l=label(page,tostring(t or 'Section'),28);l.Font=Enum.Font.GothamBold;bindTheme(l,'TextColor3','Accent');return l
   end
   function tab:Label(x)
    local t=type(x)=='table' and (x.Text or x.Title) or x
@@ -205,6 +292,7 @@ function Library:CreateWindow(options)
    local b=btn(page,x.Title or 'Button')
    bindSound(b)
    track(b.MouseButton1Click:Connect(function()call(x.Callback)end))
+   applyTheme()
    return b
   end
   function tab:Toggle(x)
@@ -214,6 +302,7 @@ function Library:CreateWindow(options)
    refresh()
    bindSound(b)
    track(b.MouseButton1Click:Connect(function()value=not value;refresh();call(x.Callback,value)end))
+   applyTheme()
    return {Set=function(_,v)value=not not v;refresh();call(x.Callback,value)end,Get=function()return value end}
   end
   function tab:Slider(x)
@@ -221,10 +310,10 @@ function Library:CreateWindow(options)
    if hi<=lo then hi=lo+1 end
    local step=math.max(tonumber(x.Step) or 1,.0001)
    local value=math.clamp(tonumber(x.Default or v.Default) or lo,lo,hi)
-   local holder=make('Frame',{Size=UDim2.new(1,0,0,57),BackgroundColor3=Color3.fromRGB(42,31,62),BackgroundTransparency=.12,BorderSizePixel=0,ZIndex=7},page);corner(holder,8)
+   local holder=make('Frame',{Size=UDim2.new(1,0,0,57),BackgroundColor3=Color3.fromRGB(42,31,62),BackgroundTransparency=.12,BorderSizePixel=0,ZIndex=7},page);corner(holder,8);register(holder,'Control')
    local textLabel=label(holder,'',26);textLabel.Position=UDim2.fromOffset(10,0);textLabel.Size=UDim2.new(1,-20,0,26)
    local trackBar=make('Frame',{Position=UDim2.new(0,10,0,37),Size=UDim2.new(1,-20,0,7),BackgroundColor3=Color3.fromRGB(24,18,34),BorderSizePixel=0,ZIndex=8},holder);corner(trackBar,4)
-   local fill=make('Frame',{Size=UDim2.fromScale(0,1),BackgroundColor3=Color3.fromRGB(169,81,255),BorderSizePixel=0,ZIndex=9},trackBar);corner(fill,4)
+   local fill=make('Frame',{Size=UDim2.fromScale(0,1),BackgroundColor3=Color3.fromRGB(169,81,255),BorderSizePixel=0,ZIndex=9},trackBar);corner(fill,4);register(fill,'Accent')
    local function set(vv,notify)
     value=math.clamp(math.floor((vv-lo)/step+.5)*step+lo,lo,hi)
     textLabel.Text=(x.Title or 'Slider')..': '..string.format('%g',value)
@@ -232,10 +321,11 @@ function Library:CreateWindow(options)
     if notify then call(x.Callback,value) end
    end
    set(value,false)
+   applyTheme()
    local sliding=false
    local function fromInput(input)
     if trackBar.AbsoluteSize.X<=0 then return end
-    local alpha=math.clamp((input.Position.X-trackBar.AbsolutePosition.X)/trackBar.AbsoluteSize.X,0,1)
+    local alpha=math.clamp((pos2(input).X-trackBar.AbsolutePosition.X)/trackBar.AbsoluteSize.X,0,1)
     set(lo+(hi-lo)*alpha,true)
    end
    track(holder.InputBegan:Connect(function(input)
@@ -247,100 +337,4 @@ function Library:CreateWindow(options)
    track(UIS.InputEnded:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then sliding=false end
    end))
-   return {Set=function(_,v2)set(tonumber(v2) or lo,true)end,Get=function()return value end}
-  end
-  function tab:Dropdown(x)
-   x=x or {};local values=x.Values or x.Options or {};local chosen=x.Value or values[1]
-   local b=btn(page,(x.Title or 'Dropdown')..': '..tostring(chosen or 'Select'))
-   local list=make('Frame',{Size=UDim2.new(1,0,0,0),BackgroundTransparency=1,Visible=false,ZIndex=7,AutomaticSize=Enum.AutomaticSize.Y},page)
-   make('UIListLayout',{Padding=UDim.new(0,4)},list)
-   for _,item in ipairs(values) do
-    local v=item;local opt=btn(list,tostring(v),30)
-    bindSound(opt)
-    track(opt.MouseButton1Click:Connect(function()chosen=v;b.Text=(x.Title or 'Dropdown')..': '..tostring(v);list.Visible=false;call(x.Callback,v)end))
-   end
-   bindSound(b)
-   track(b.MouseButton1Click:Connect(function()list.Visible=not list.Visible end))
-   return {Get=function()return chosen end,Set=function(_,v)chosen=v;b.Text=(x.Title or 'Dropdown')..': '..tostring(v);call(x.Callback,v)end}
-  end
-  function tab:Input(x)
-   x=x or {};local box=make('TextBox',{Size=UDim2.new(1,0,0,36),BackgroundColor3=Color3.fromRGB(42,31,62),TextColor3=Color3.new(1,1,1),PlaceholderText=x.Placeholder or x.Title or 'Input',Text=x.Default or '',ClearTextOnFocus=false,Font=Enum.Font.Gotham,TextSize=13,ZIndex=7},page);corner(box,8)
-   track(box.FocusLost:Connect(function(enter)if enter or not x.EnterOnly then call(x.Callback,box.Text)end end))
-   return box
-  end
-  function tab:ScrollToTop()
-   TweenService:Create(page,TweenInfo.new(.3,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{CanvasPosition=Vector2.zero}):Play()
-  end
-  function tab:Paragraph(x)
-   x=type(x)=='string' and {Text=x} or (x or {})
-   local p=label(page,x.Text or x.Content or '',60)
-   p.TextWrapped=true;p.TextYAlignment=Enum.TextYAlignment.Top
-   p.AutomaticSize=Enum.AutomaticSize.Y
-   return p
-  end
-  return tab
- end
- local topButton=make('TextButton',{Name='ScrollTop',AnchorPoint=Vector2.new(1,1),Position=UDim2.new(1,-14,1,-13),Size=UDim2.fromOffset(30,30),BackgroundColor3=Color3.fromRGB(91,48,141),BackgroundTransparency=.1,Text='↑',TextColor3=Color3.new(1,1,1),TextSize=20,ZIndex=12},main)
- corner(topButton,8);bindSound(topButton)
- track(topButton.Activated:Connect(function()
-  if activeTab then TweenService:Create(activeTab.Page,TweenInfo.new(.3),{CanvasPosition=Vector2.zero}):Play() end
- end))
- local grip=make('TextButton',{Name='ResizeGrip',AnchorPoint=Vector2.new(1,1),Position=UDim2.new(1,-3,1,-3),Size=UDim2.fromOffset(15,15),BackgroundTransparency=1,Text='◢',TextColor3=Color3.fromRGB(218,174,255),TextSize=15,ZIndex=14},main)
- local sizing=false;local sizingInput;local sizingStart;local originalSize
- track(grip.InputBegan:Connect(function(input)
-  if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-   sizing=true;sizingInput=input;sizingStart=input.Position;originalSize=fullSize
-  end
- end))
- track(UIS.InputChanged:Connect(function(input)
-  if sizing and (input==sizingInput or (sizingInput and sizingInput.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement)) then
-   local d=(input.Position-sizingStart)/math.max(viewport.Scale,.01)
-   window:SetSize(originalSize.X.Offset+d.X,originalSize.Y.Offset+d.Y)
-  end
- end))
- track(UIS.InputEnded:Connect(function(input)if input==sizingInput then sizing=false end end))
- function window:SetFloatingVisible(v)floating.Visible=not not v end
- local render
- render=RunService.RenderStepped:Connect(function()
-  if not gui.Parent then render:Disconnect();return end
-  if not main.Visible or not playing then return end
-  local gif=GIFs[current];local duration=0
-  for _,s in ipairs(gif.Sheets) do duration=duration+s[4]/s[2] end
-  local elapsed=(frozen+os.clock()-started)%duration
-  for _,s in ipairs(gif.Sheets) do
-   local d=s[4]/s[2]
-   if elapsed<d then
-    local frame=math.clamp(math.floor(elapsed*s[2]),0,s[4]-1)
-    if lastSheet~=s or lastFrame~=frame then
-     local col=frame%s[3];local row=math.floor(frame/s[3])
-     bg.ImageRectSize=Vector2.new(s[5],s[6]);bg.ImageRectOffset=Vector2.new(col*s[5],row*s[6])
-     local asset='rbxassetid://'..s[1];if bg.Image~=asset then bg.Image=asset end
-     lastSheet=s;lastFrame=frame
-    end
-    break
-   end
-   elapsed=elapsed-d
-  end
- end)
- function window:Destroy()
-  if self.Destroyed then return end
-  self.Destroyed=true
-  if render then render:Disconnect() end
-  if camConnection then camConnection:Disconnect() end
-  for _,c in ipairs(connections) do c:Disconnect() end
-  gui:Destroy()
-  if Library._windows and Library._windows[guiName]==self then Library._windows[guiName]=nil end
- end
- track(close.MouseButton1Click:Connect(function()window:Destroy()end))
- window:SetAnimation(options.Animation or 'Skulls')
- task.spawn(function()
-  local assets,seen={},{}
-  for _,g in ipairs(GIFs) do for _,s in ipairs(g.Sheets) do
-   local id='rbxassetid://'..s[1]
-   if not seen[id] then seen[id]=true;table.insert(assets,id) end
-  end end
-  pcall(function()ContentProvider:PreloadAsync(assets)end)
- end)
- return window
-end
-return Library
+   return {Set=function(_,v2)set(
