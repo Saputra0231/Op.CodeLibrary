@@ -3,16 +3,16 @@
     FULL EXAMPLE SCRIPT V3.1
 
     FITUR:
-    - Animated Background
-    - 9 GIF Animations
+    - Custom Floating Logo
+    - Animated Background (9 GIF)
     - Live Theme Switcher
     - Background Transparency
     - Animation Play / Pause
     - Next / Previous Animation
     - Floating Button
-    - Avatar Roblox
     - GUI Resize & Drag
     - Mobile Support
+    - Sound Effects
 ]]
 
 --------------------------------------------------
@@ -26,6 +26,9 @@ local AnimatedUI = loadstring(game:HttpGet(
 --------------------------------------------------
 -- CONFIGURATION
 --------------------------------------------------
+
+-- GANTI DENGAN ASSET ID LOGO OP-CODE LU
+local LOGO_ID = 126098931344664
 
 local Animations = {
     "Skulls",
@@ -49,13 +52,17 @@ local CurrentTheme = "Midnight"
 local Window = AnimatedUI:CreateWindow({
     Name = "OP_CODE_PremiumHub",
     Title = "OP-CODE PREMIUM HUB",
+
     Theme = CurrentTheme,
     Animation = Animations[CurrentAnimation],
     Transparency = 0.35,
-    Size = UDim2.fromOffset(570, 420),
-    Sounds = true
 
-    -- LogoId = 123456789
+    Size = UDim2.fromOffset(570, 420),
+
+    -- CUSTOM FLOATING LOGO
+    LogoId = 126098931344664,
+
+    Sounds = true
 })
 
 --------------------------------------------------
@@ -74,6 +81,7 @@ Main:Paragraph({
 
 Main:Button({
     Title = "Test Button",
+
     Callback = function()
         print("[OP-CODE] Button clicked!")
     end
@@ -82,6 +90,7 @@ Main:Button({
 Main:Toggle({
     Title = "Test Toggle",
     Value = false,
+
     Callback = function(value)
         print("[OP-CODE] Toggle:", value)
     end
@@ -92,6 +101,7 @@ Main:Slider({
     Min = 0,
     Max = 100,
     Default = 50,
+
     Callback = function(value)
         print("[OP-CODE] Volume:", value)
     end
@@ -99,6 +109,7 @@ Main:Slider({
 
 Main:Input({
     Title = "Message",
+
     Callback = function(text)
         print("[OP-CODE] Message:", text)
     end
@@ -129,6 +140,10 @@ Appearance:Dropdown({
             selected = selected[1]
         end
 
+        if not selected then
+            return
+        end
+
         for index, name in ipairs(Animations) do
             if name == selected then
                 CurrentAnimation = index
@@ -151,7 +166,8 @@ Appearance:Button({
 
     Callback = function()
 
-        CurrentAnimation = (CurrentAnimation % #Animations) + 1
+        CurrentAnimation =
+            (CurrentAnimation % #Animations) + 1
 
         Window:SetAnimation(
             Animations[CurrentAnimation]
@@ -173,7 +189,8 @@ Appearance:Button({
 
     Callback = function()
 
-        CurrentAnimation = ((CurrentAnimation - 2) % #Animations) + 1
+        CurrentAnimation =
+            ((CurrentAnimation - 2) % #Animations) + 1
 
         Window:SetAnimation(
             Animations[CurrentAnimation]
@@ -199,9 +216,7 @@ Appearance:Slider({
     Default = 35,
 
     Callback = function(value)
-
         Window:SetTransparency(value / 100)
-
     end
 })
 
@@ -214,9 +229,7 @@ Appearance:Toggle({
     Value = true,
 
     Callback = function(enabled)
-
         Window:SetPlaying(enabled)
-
     end
 })
 
@@ -235,6 +248,10 @@ Appearance:Dropdown({
 
         if type(theme) == "table" then
             theme = theme[1]
+        end
+
+        if not theme then
+            return
         end
 
         CurrentTheme = theme
@@ -266,7 +283,6 @@ Appearance:Button({
         })
 
         print("[OP-CODE] Custom theme applied!")
-
     end
 })
 
@@ -290,7 +306,6 @@ Appearance:Button({
         Window:SetTheme("Midnight")
 
         print("[OP-CODE] Appearance reset!")
-
     end
 })
 
@@ -305,12 +320,14 @@ local Info = Window:CreateTab({
 Info:Section("ABOUT OP-CODE")
 
 Info:Paragraph({
-    Text = "OP-CODE AnimatedUI Library V3.1\n\n" ..
+    Text =
+        "OP-CODE AnimatedUI Library V3.1\n\n" ..
+        "Developer: OP-CODE\n\n" ..
         "Features:\n" ..
         "- 9 Animated Backgrounds\n" ..
         "- 9 GUI Themes\n" ..
         "- Custom Theme Support\n" ..
-        "- Avatar Floating Button\n" ..
+        "- Custom Floating Logo\n" ..
         "- Draggable & Resizable Window\n" ..
         "- Mobile Support\n" ..
         "- Live Appearance Settings"
