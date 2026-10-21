@@ -2,6 +2,11 @@
     OP-CODE PREMIUM HUB
     FULL EXAMPLE SCRIPT V3.1
 
+    TAB ORDER:
+    1. Main
+    2. Information
+    3. Setting
+
     FITUR:
     - Custom Floating Logo
     - Animated Background (9 GIF)
@@ -27,8 +32,7 @@ local AnimatedUI = loadstring(game:HttpGet(
 -- CONFIGURATION
 --------------------------------------------------
 
--- GANTI DENGAN ASSET ID LOGO OP-CODE LU
-local LOGO_ID = 126098931344664
+local LOGO_ID = 95922158965353
 
 local Animations = {
     "Skulls",
@@ -59,14 +63,13 @@ local Window = AnimatedUI:CreateWindow({
 
     Size = UDim2.fromOffset(570, 420),
 
-    -- CUSTOM FLOATING LOGO
-    LogoId = 126098931344664,
+    LogoId = LOGO_ID,
 
     Sounds = true
 })
 
 --------------------------------------------------
--- MAIN TAB
+-- 1. MAIN TAB
 --------------------------------------------------
 
 local Main = Window:CreateTab({
@@ -116,20 +119,53 @@ Main:Input({
 })
 
 --------------------------------------------------
--- APPEARANCE TAB
+-- 2. INFORMATION TAB
 --------------------------------------------------
 
-local Appearance = Window:CreateTab({
-    Title = "Appearance"
+local Info = Window:CreateTab({
+    Title = "Information"
 })
 
-Appearance:Section("ANIMATED BACKGROUND")
+Info:Section("ABOUT OP-CODE")
+
+Info:Paragraph({
+    Text =
+        "OP-CODE AnimatedUI Library V3.1\n\n" ..
+        "Developer: OP-CODE\n\n" ..
+        "Features:\n" ..
+        "- 9 Animated Backgrounds\n" ..
+        "- 9 GUI Themes\n" ..
+        "- Custom Theme Support\n" ..
+        "- Custom Floating Logo\n" ..
+        "- Draggable & Resizable Window\n" ..
+        "- Mobile Support\n" ..
+        "- Live Appearance Settings"
+})
+
+Info:Button({
+    Title = "Print Library Info",
+
+    Callback = function()
+        print("OP-CODE AnimatedUI Library V3.1")
+        print("Developer: OP-CODE")
+    end
+})
+
+--------------------------------------------------
+-- 3. SETTING TAB
+--------------------------------------------------
+
+local Setting = Window:CreateTab({
+    Title = "Setting"
+})
+
+Setting:Section("ANIMATED BACKGROUND")
 
 --------------------------------------------------
 -- ANIMATION DROPDOWN
 --------------------------------------------------
 
-Appearance:Dropdown({
+Setting:Dropdown({
     Title = "Pilih Animasi",
     Values = Animations,
     Value = Animations[CurrentAnimation],
@@ -161,7 +197,7 @@ Appearance:Dropdown({
 -- NEXT ANIMATION
 --------------------------------------------------
 
-Appearance:Button({
+Setting:Button({
     Title = "Next Animation ▶",
 
     Callback = function()
@@ -184,7 +220,7 @@ Appearance:Button({
 -- PREVIOUS ANIMATION
 --------------------------------------------------
 
-Appearance:Button({
+Setting:Button({
     Title = "◀ Previous Animation",
 
     Callback = function()
@@ -207,9 +243,9 @@ Appearance:Button({
 -- BACKGROUND TRANSPARENCY
 --------------------------------------------------
 
-Appearance:Section("BACKGROUND SETTINGS")
+Setting:Section("BACKGROUND SETTINGS")
 
-Appearance:Slider({
+Setting:Slider({
     Title = "Background Transparency",
     Min = 0,
     Max = 100,
@@ -224,7 +260,7 @@ Appearance:Slider({
 -- ANIMATION PLAY / PAUSE
 --------------------------------------------------
 
-Appearance:Toggle({
+Setting:Toggle({
     Title = "Play Animation",
     Value = true,
 
@@ -237,9 +273,9 @@ Appearance:Toggle({
 -- THEME MANAGER
 --------------------------------------------------
 
-Appearance:Section("THEME MANAGER")
+Setting:Section("THEME MANAGER")
 
-Appearance:Dropdown({
+Setting:Dropdown({
     Title = "Pilih Tema",
     Values = Window:GetThemes(),
     Value = CurrentTheme,
@@ -266,7 +302,7 @@ Appearance:Dropdown({
 -- CUSTOM THEME
 --------------------------------------------------
 
-Appearance:Button({
+Setting:Button({
     Title = "Custom Neon Theme",
 
     Callback = function()
@@ -290,9 +326,9 @@ Appearance:Button({
 -- RESET APPEARANCE
 --------------------------------------------------
 
-Appearance:Section("RESET")
+Setting:Section("RESET")
 
-Appearance:Button({
+Setting:Button({
     Title = "Reset Appearance",
 
     Callback = function()
@@ -306,39 +342,6 @@ Appearance:Button({
         Window:SetTheme("Midnight")
 
         print("[OP-CODE] Appearance reset!")
-    end
-})
-
---------------------------------------------------
--- INFORMATION TAB
---------------------------------------------------
-
-local Info = Window:CreateTab({
-    Title = "Information"
-})
-
-Info:Section("ABOUT OP-CODE")
-
-Info:Paragraph({
-    Text =
-        "OP-CODE AnimatedUI Library V3.1\n\n" ..
-        "Developer: OP-CODE\n\n" ..
-        "Features:\n" ..
-        "- 9 Animated Backgrounds\n" ..
-        "- 9 GUI Themes\n" ..
-        "- Custom Theme Support\n" ..
-        "- Custom Floating Logo\n" ..
-        "- Draggable & Resizable Window\n" ..
-        "- Mobile Support\n" ..
-        "- Live Appearance Settings"
-})
-
-Info:Button({
-    Title = "Print Library Info",
-
-    Callback = function()
-        print("OP-CODE AnimatedUI Library V3.1")
-        print("Developer: OP-CODE")
     end
 })
 
